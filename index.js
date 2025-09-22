@@ -7,9 +7,10 @@ import userService, { connectDB } from "./user-service/src/index.js";
 dotenv.config();
 const app = express();
 
-// CORS setup for frontend
+// CORS setup for fronten
 app.use(cors({
-  origin: "http://localhost:8080",
+  // origin: "http://localhost:8080",
+    origin: "https://lifly-ecommerce.onrender.com",
   credentials: true,
 }));
 
