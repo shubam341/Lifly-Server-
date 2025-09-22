@@ -10,11 +10,14 @@ const app = express();
 // CORS setup for fronten
 app.use(cors({
   // origin: "http://localhost:8080",
-    origin: "https://lifly-ecommerce.onrender.com",
+    origin: "https://lifly-client.vercel.app",
   credentials: true,
 }));
 
 app.use(express.json());
+
+
+
 
 // Mount auth-service routes
 app.use("/auth", authApp);
