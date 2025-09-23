@@ -60,20 +60,41 @@
 // auth-service/src/index.js
 import express from "express";
 import cors from "cors";
-import * as dotenv from "dotenv";
+import dotenv from "dotenv";
 import { expressjwt } from "express-jwt";
-import jwks from "jwks-rsa";
+import jwksRsa from "jwks-rsa";
 
 dotenv.config();
 
 const authApp = express();
-authApp.use(cors());
+
+// ---------- CORS ----------
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://lifly-client.vercel.app"
+];
+
+authApp.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS not allowed: ${origin}`), false);
+  },
+  credentials: true,
+}));
+
 authApp.use(express.json());
 
+// ---------- DEBUG ----------
+console.log("AUTH0_DOMAIN:", process.env.AUTH0_DOMAIN);
+console.log("AUTH0_AUDIENCE:", process.env.AUTH0_AUDIENCE);
+
+// ---------- JWT ----------
 export const checkJwt = expressjwt({
-  secret: jwks.expressJwtSecret({
+  secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
+    jwksRequestsPerMinute: 5,
     jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
   }),
   audience: process.env.AUTH0_AUDIENCE,
@@ -81,17 +102,16 @@ export const checkJwt = expressjwt({
   algorithms: ["RS256"],
 });
 
-// Public route
+// ---------- Routes ----------
 authApp.get("/public", (req, res) => {
   res.json({ message: "Hello from public endpoint!" });
 });
 
-// Protected route
 authApp.get("/protected", checkJwt, (req, res) => {
   res.json({ message: "Hello from protected endpoint!", user: req.auth });
 });
 
-// Global error handler
+// ---------- Global error handler ----------
 authApp.use((err, req, res, next) => {
   if (err.name === "UnauthorizedError") return res.status(401).json({ error: "Invalid token" });
   console.error(err);
@@ -99,3 +119,4 @@ authApp.use((err, req, res, next) => {
 });
 
 export default authApp;
+
