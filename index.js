@@ -10,7 +10,7 @@ const app = express();
 // CORS setup for fronten
 app.use(cors({
   origin: "http://localhost:5173",
-    origin: "https://lifly-client.vercel.app",
+    origin: "https://lifly-client.vercel.app/",
   credentials: true,
 }));
 
