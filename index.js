@@ -19,7 +19,8 @@ const __dirname = path.dirname(__filename);
 // ------------------- CORS SETUP -------------------
 const allowedOrigins = [
   "http://localhost:5173",        // local dev
-"https://lifly-ecommerce.onrender.com"
+// "https://lifly-ecommerce.onrender.com"
+"https://lifly-client.vercel.app/"
 ];
 
 app.use(cors({
