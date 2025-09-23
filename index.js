@@ -13,7 +13,7 @@ const app = express();
 // ------------------- CORS SETUP -------------------
 const allowedOrigins = [
   "http://localhost:5173",        // local dev
-  "https://lifly-client.vercel.app" // Vercel frontend
+"https://lifly-ecommerce.onrender.com"
 ];
 
 app.use(cors({
