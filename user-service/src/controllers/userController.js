@@ -6,8 +6,12 @@ export const getUserProfile = async (req, res) => {
     const { auth0Id } = req.params;
     if (!auth0Id) return res.status(400).json({ message: "auth0Id missing" });
 
-    let user = await User.findOne({ auth0Id });
-    if (!user) user = await User.create({ auth0Id });
+    // ✅ Create or return existing user safely
+    const user = await User.findOneAndUpdate(
+      { auth0Id },
+      { $setOnInsert: { email: `${auth0Id}@placeholder.com` } }, // only set email if new
+      { new: true, upsert: true }
+    );
 
     res.json(user);
   } catch (err) {
@@ -20,13 +24,19 @@ export const getUserProfile = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   try {
     const { auth0Id } = req.params;
-    const { name, bio, profilePicture } = req.body;
+    const { name, bio, profilePicture, email } = req.body;
 
     if (!auth0Id) return res.status(400).json({ message: "auth0Id missing" });
 
+    // ✅ Prevent duplicate email: if email is empty, keep old or generate placeholder
     const updatedUser = await User.findOneAndUpdate(
       { auth0Id },
-      { name, bio, profilePicture },
+      {
+        name,
+        bio,
+        profilePicture,
+        email: email || `${auth0Id}@placeholder.com`,
+      },
       { new: true, upsert: true }
     );
 
