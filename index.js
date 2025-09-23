@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url"; // ✅ Make sure this line exists
+import path from "path"; // ✅ Import path
 
 // Import your microservices
 import authApp, { checkJwt } from "./auth-service/src/index.js";
@@ -9,6 +11,10 @@ import userService, { connectDB } from "./user-service/src/index.js";
 dotenv.config();
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // ------------------- CORS SETUP -------------------
 const allowedOrigins = [
@@ -43,6 +49,16 @@ connectDB().then(() => console.log("MongoDB connected"));
 
 // Mount User service (example: /api/users)
 app.use("/api/users", userService);
+
+
+// Serve static frontend build
+app.use(express.static(path.join(__dirname, "build")));
+
+// For all other routes, send index.html so React Router works
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
+
 
 // ------------------- START SERVER -------------------
 const PORT = process.env.PORT || 5000;
