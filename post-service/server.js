@@ -10,19 +10,26 @@ dotenv.config();
 
 const app = express();
 
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists in ROOT
 const uploadsPath = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
   console.log("Uploads directory created at:", uploadsPath);
 }
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(uploadsPath));
+// Note: We DO NOT serve /uploads here, the root server serves it
 
 // Routes
 app.use("/", postRoutes);
@@ -34,9 +41,9 @@ export const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("MongoDB connected");
+    console.log("Post Service MongoDB connected");
   } catch (err) {
-    console.error("MongoDB connection error:", err);
+    console.error("Post Service DB connection error:", err);
     throw err;
   }
 };

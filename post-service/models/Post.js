@@ -8,6 +8,8 @@ const postSchema = new mongoose.Schema({
   authorId: { type: String, required: true },
   authorName: { type: String, required: true },
   authorAvatar: { type: String, required: true },
+  //  likes: { type: Number, default: 0 },           // ← Add this
+  // comments: { type: Number, default: 0 }, 
   createdAt: { type: Date, default: Date.now }
 });
 

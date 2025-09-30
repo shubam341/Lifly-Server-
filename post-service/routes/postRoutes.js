@@ -1,16 +1,45 @@
+// import express from "express";
+// import { createPost, getAllPosts, getPostById } from "../controllers/postController.js";
+// import { upload } from "../utils/upload.js";
+// import { checkJwt } from "../middleware/authMiddleware.js";
+
+// const router = express.Router();
+
+// // Create post
+// router.post("/", checkJwt, upload.single("media"), createPost);
+
+// // Get all posts
+// router.get("/", getAllPosts);
+
+// // ✅ Get single post by ID
+// router.get("/:id", getPostById);
+
+// export default router;
+
+
 import express from "express";
-import { createPost } from "../controllers/postController.js";
+import { 
+  createPost, 
+  getAllPosts, 
+  getPostById, 
+  updatePostsAuthorInfo 
+} from "../controllers/postController.js";
 import { upload } from "../utils/upload.js";
 import { checkJwt } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// POST route with Auth0 validation and file upload
+// Create post
 router.post("/", checkJwt, upload.single("media"), createPost);
 
-// GET route (no auth required, optional)
-router.get("/", async (req, res) => {
-  res.send("GET posts route - can implement later");
-});
+// Get all posts
+router.get("/", getAllPosts);
+
+// Get single post by ID
+router.get("/:id", getPostById);
+
+// ✅ Update all posts' author info when user updates profile
+router.patch("/update-author/:auth0Id", checkJwt, updatePostsAuthorInfo);
 
 export default router;
+
