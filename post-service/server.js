@@ -5,18 +5,15 @@ import dotenv from "dotenv";
 import postRoutes from "./routes/postRoutes.js";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
 
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'build')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
-}
+// ===== ES module __dirname fix =====
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Middleware
 app.use(cors());
@@ -29,10 +26,17 @@ if (!fs.existsSync(uploadsPath)) {
   console.log("Uploads directory created at:", uploadsPath);
 }
 
-// Note: We DO NOT serve /uploads here, the root server serves it
-
 // Routes
 app.use("/", postRoutes);
+
+// Serve frontend build in production
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, "build");
+  app.use(express.static(buildPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  });
+}
 
 // Function to connect to MongoDB
 export const connectDB = async () => {
