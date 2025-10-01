@@ -109,7 +109,9 @@ const __dirname = path.dirname(__filename);
 
 // Serve uploads folder from root
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads"))); 
+app.use("/uploads", express.static("uploads"));
+
 
 // ===== CORS setup =====
 const allowedOrigins = [

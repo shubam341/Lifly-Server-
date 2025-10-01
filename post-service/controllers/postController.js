@@ -89,24 +89,29 @@
 
 
 import Post from "../models/Post.js";
+ // ✅ you were missing this import
 import fetch from "node-fetch";
+
+// Helper to normalize media URLs
+const buildMediaUrl = (mediaUrl) => {
+  if (!mediaUrl) return null;
+  if (mediaUrl.startsWith("http")) return mediaUrl;
+  return `${process.env.BASE_URL}/uploads/${mediaUrl}`;
+};
 
 // CREATE POST
 export const createPost = async (req, res) => {
   try {
-    // 1️⃣ Auth0 validation
     const auth0Id = req.auth?.sub;
     if (!auth0Id) return res.status(401).json({ message: "Unauthorized" });
 
-    // 2️⃣ Validate environment variable
     if (!process.env.USER_SERVICE_URL) {
       throw new Error("USER_SERVICE_URL is not defined in .env");
     }
 
-    // 3️⃣ Fetch current user info from User Service
+    // Fetch user info
     const userServiceUrl = `${process.env.USER_SERVICE_URL}/${auth0Id}`;
     const userRes = await fetch(userServiceUrl);
-
     if (!userRes.ok) {
       const errorText = await userRes.text();
       return res.status(userRes.status).json({ message: errorText });
@@ -115,10 +120,9 @@ export const createPost = async (req, res) => {
     const userData = await userRes.json();
     const authorName = userData.name || userData.username || "Unknown";
     const authorAvatar = userData.avatar
-      ? `${process.env.BASE_URL}/uploads/${userData.avatar}`
+      ? buildMediaUrl(userData.avatar)
       : `${process.env.BASE_URL}/uploads/default.png`;
 
-    // 4️⃣ Get post data
     const { title, category, bio } = req.body;
     const file = req.file;
     if (!file) return res.status(400).json({ message: "Media file is required" });
@@ -126,9 +130,9 @@ export const createPost = async (req, res) => {
     if (!process.env.BASE_URL) {
       throw new Error("BASE_URL is not defined in .env");
     }
+
     const mediaUrl = `${process.env.BASE_URL}/uploads/${file.filename}`;
 
-    // 5️⃣ Save post with current user info
     const newPost = new Post({
       title,
       category,
@@ -151,7 +155,12 @@ export const createPost = async (req, res) => {
 // GET ALL POSTS
 export const getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: -1 }); // latest first
+    let posts = await Post.find().sort({ createdAt: -1 }).lean();
+    posts = posts.map(post => ({
+      ...post,
+      mediaUrl: buildMediaUrl(post.mediaUrl),
+      authorAvatar: buildMediaUrl(post.authorAvatar),
+    }));
     res.status(200).json(posts);
   } catch (err) {
     console.error("Error fetching posts:", err);
@@ -163,9 +172,12 @@ export const getAllPosts = async (req, res) => {
 export const getPostById = async (req, res) => {
   try {
     const postId = req.params.id;
-    const post = await Post.findById(postId);
+    let post = await Post.findById(postId).lean();
 
     if (!post) return res.status(404).json({ message: "Post not found" });
+
+    post.mediaUrl = buildMediaUrl(post.mediaUrl);
+    post.authorAvatar = buildMediaUrl(post.authorAvatar);
 
     res.json(post);
   } catch (err) {
@@ -175,7 +187,6 @@ export const getPostById = async (req, res) => {
 };
 
 // UPDATE ALL POSTS AUTHOR INFO
-// PATCH /api/posts/update-author/:auth0Id
 export const updatePostsAuthorInfo = async (req, res) => {
   try {
     const { auth0Id } = req.params;
@@ -187,7 +198,7 @@ export const updatePostsAuthorInfo = async (req, res) => {
       { authorId: auth0Id },
       {
         authorName: name,
-        authorAvatar: avatar ? `${process.env.BASE_URL}/uploads/${avatar}` : `${process.env.BASE_URL}/uploads/default.png`
+        authorAvatar: avatar ? buildMediaUrl(avatar) : `${process.env.BASE_URL}/uploads/default.png`
       }
     );
 
@@ -195,5 +206,34 @@ export const updatePostsAuthorInfo = async (req, res) => {
   } catch (err) {
     console.error("Error updating posts:", err);
     res.status(500).json({ message: "Failed to update posts" });
+  }
+};
+
+// GET USER PROFILE + POSTS
+export const getUserProfile = async (req, res) => {
+  try {
+    const { auth0Id } = req.params;
+    if (!auth0Id) return res.status(400).json({ message: "auth0Id missing" });
+
+    const user = await User.findOne({ auth0Id }).lean();
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let posts = await Post.find({ authorId: auth0Id }).sort({ createdAt: -1 }).lean();
+    posts = posts.map(post => ({
+      ...post,
+      mediaUrl: buildMediaUrl(post.mediaUrl),
+      authorAvatar: buildMediaUrl(post.authorAvatar),
+    }));
+
+    const profile = {
+      ...user,
+      avatar: buildMediaUrl(user.avatar),
+      posts,
+    };
+
+    res.json(profile);
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
