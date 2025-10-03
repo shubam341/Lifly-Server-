@@ -204,13 +204,13 @@ export const createPost = async (req, res) => {
     const userData = await userRes.json();
 
     const authorName = userData.name || userData.username || "Unknown";
-    const authorAvatar = userData.avatar
-      ? userData.avatar.startsWith("http")
-        ? userData.avatar
-        : buildMediaUrl(userData.avatar)
-      : `${process.env.BASE_URL}/uploads/default.png`;
+   const authorAvatar =
+  userData.profilePicture && typeof userData.profilePicture === "string"
+    ? userData.profilePicture.startsWith("http")
+      ? userData.profilePicture
+      : buildMediaUrl(userData.profilePicture)
+    : `${process.env.BASE_URL}/uploads/default.png`;
 
-    // 3️⃣ Save post
     const newPost = new Post({
       title,
       category,
@@ -231,14 +231,19 @@ export const createPost = async (req, res) => {
 
 
 // ---------------- GET ALL POSTS ----------------
+// ---------------- GET ALL POSTS ----------------
 export const getAllPosts = async (req, res) => {
   try {
     let posts = await Post.find().sort({ createdAt: -1 }).lean();
+
     posts = posts.map((post) => ({
       ...post,
-      // Cloudinary URLs are already absolute
-      authorAvatar: buildMediaUrl(post.authorAvatar),
+      authorAvatar:
+        post.authorAvatar && !post.authorAvatar.startsWith("http")
+          ? buildMediaUrl(post.authorAvatar) // local file
+          : post.authorAvatar || `${process.env.BASE_URL}/uploads/default.png`, // Cloudinary or fallback
     }));
+
     res.status(200).json(posts);
   } catch (err) {
     console.error("Error fetching posts:", err);
@@ -253,7 +258,10 @@ export const getPostById = async (req, res) => {
     let post = await Post.findById(postId).lean();
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    post.authorAvatar = buildMediaUrl(post.authorAvatar);
+    post.authorAvatar =
+      post.authorAvatar && !post.authorAvatar.startsWith("http")
+        ? buildMediaUrl(post.authorAvatar)
+        : post.authorAvatar || `${process.env.BASE_URL}/uploads/default.png`;
 
     res.json(post);
   } catch (err) {
@@ -309,6 +317,29 @@ export const getUserProfile = async (req, res) => {
     res.json(profile);
   } catch (err) {
     console.error("Error fetching profile:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+// ---------------- GET POSTS BY USER ----------------
+export const getPostsByUser = async (req, res) => {
+  try {
+    const { auth0Id } = req.params;
+    if (!auth0Id) return res.status(400).json({ message: "auth0Id missing" });
+
+    // Fetch posts only by this user
+    let posts = await Post.find({ authorId: auth0Id }).sort({ createdAt: -1 }).lean();
+
+    // Make sure avatar URLs are correct
+    posts = posts.map(post => ({
+      ...post,
+      authorAvatar: post.authorAvatar ? post.authorAvatar : `${process.env.BASE_URL}/uploads/default.png`,
+    }));
+
+    res.json(posts);
+  } catch (err) {
+    console.error("Error fetching user's posts:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

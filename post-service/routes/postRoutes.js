@@ -22,7 +22,8 @@ import {
   createPost, 
   getAllPosts, 
   getPostById, 
-  updatePostsAuthorInfo 
+  updatePostsAuthorInfo ,
+  getPostsByUser 
 } from "../controllers/postController.js";
 import { upload } from "../utils/upload.js";
 import { checkJwt } from "../middleware/authMiddleware.js";
@@ -40,6 +41,8 @@ router.get("/:id", getPostById);
 
 // ✅ Update all posts' author info when user updates profile
 router.patch("/update-author/:auth0Id", checkJwt, updatePostsAuthorInfo);
+
+router.get("/user/:auth0Id", getPostsByUser);
 
 export default router;
 

@@ -2,7 +2,7 @@
   "name": "user-service",
   "version": "1.0.0",
   "main": "index.js",
-    "type": "module",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
@@ -18,7 +18,8 @@
     "express": "^5.1.0",
     "express-jwt": "^8.5.1",
     "jwks-rsa": "^3.2.0",
-    "mongoose": "^8.18.1"
+    "mongoose": "^8.18.1",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
