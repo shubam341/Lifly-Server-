@@ -8,8 +8,6 @@ const router = express.Router();
 // GET user profile
 router.get("/:auth0Id", getUserProfile);
 
-// UPDATE user profile + optional avatar upload
-// 'avatar' here is the name of the field sent from frontend
 router.put("/:auth0Id", upload.single("avatar"), updateUserProfile);
 
 export default router;

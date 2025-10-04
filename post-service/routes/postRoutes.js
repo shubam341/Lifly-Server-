@@ -1,21 +1,3 @@
-// import express from "express";
-// import { createPost, getAllPosts, getPostById } from "../controllers/postController.js";
-// import { upload } from "../utils/upload.js";
-// import { checkJwt } from "../middleware/authMiddleware.js";
-
-// const router = express.Router();
-
-// // Create post
-// router.post("/", checkJwt, upload.single("media"), createPost);
-
-// // Get all posts
-// router.get("/", getAllPosts);
-
-// // ✅ Get single post by ID
-// router.get("/:id", getPostById);
-
-// export default router;
-
 
 import express from "express";
 import { 
